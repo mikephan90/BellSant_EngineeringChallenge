@@ -1,11 +1,12 @@
-import {Button, Platform, StyleSheet} from 'react-native';
+import React, {Button, Platform, StyleSheet} from 'react-native';
 import {Text, View} from '../../components/Themed';
-import {Link, useFocusEffect} from 'expo-router';
+import {Link} from 'expo-router';
 import axios from 'axios';
-import {useMachineData} from '../useMachineData';
-import {useCallback, useState} from 'react';
+import {useCallback} from 'react';
 import {PartsOfMachine} from '../../components/PartsOfMachine';
 import {MachineScore} from '../../components/MachineScore';
+import {useAuth} from "../../context/AuthContext";
+import {useData} from "../../context/DataContext";
 
 let apiUrl: string =
   'https://fancy-dolphin-65b07b.netlify.app/api/machine-health';
@@ -17,19 +18,20 @@ if (__DEV__) {
 }
 
 export default function StateScreen() {
-  const {machineData, resetMachineData, loadMachineData, setScores} =
-    useMachineData();
+  const {logOut, username} = useAuth();
+  const {machineData, resetData, setScores} = useData();
 
-  //Doing this because we're not using central state like redux
-  useFocusEffect(
-    useCallback(() => {
-      loadMachineData();
-    }, []),
-  );
+  const handleLogout = async () => {
+    logOut();
+  }
 
   const calculateHealth = useCallback(async () => {
     try {
-      const response = await axios.post(apiUrl, {
+      /*
+      * NOTE: Since I want to add user sessions with a persistence layer for the backend service
+      * I added the username identifier to the endpoint, so I can pull retrieve the data for that particular user
+      */
+      const response = await axios.post(`${apiUrl}:${username}`, {
         machines: machineData?.machines,
       });
 
@@ -110,10 +112,18 @@ export default function StateScreen() {
       <View style={styles.resetButton}>
         <Button
           title='Reset Machine Data'
-          onPress={async () => await resetMachineData()}
+          onPress={resetData}
           color='#FF0000'
         />
       </View>
+
+      {/* Would be more ideal if it were in the header, future */}
+      <View
+        style={styles.separator}
+        lightColor='#eee'
+        darkColor='rgba(255,255,255,0.1)'
+      />
+      <Button title="Log out" onPress={handleLogout}/>
     </View>
   );
 }

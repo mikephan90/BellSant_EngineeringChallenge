@@ -3,16 +3,16 @@ import {Button, Platform, StyleSheet, TextInput} from 'react-native';
 
 import {Text, View} from './Themed';
 import {MachineType} from '../data/types';
-import {useMachineData} from '../app/useMachineData';
-import {useFocusEffect} from 'expo-router';
 import Picker from './Picker';
+import {useData} from "../context/DataContext";
 
 export default function EditScreenInfo({path}: {path: string}) {
   const [machineName, setMachineName] = useState('');
   const [partName, setPartName] = useState('');
   const [partValue, setPartValue] = useState('');
   const [isSaved, setIsSaved] = useState(false);
-  const {machineData, updateMachineData, loadMachineData} = useMachineData();
+  // Use custom hook for state management
+  const {machineData, updateData} = useData();
 
   const machineNames = [
     {label: 'Welding Robot', value: MachineType.WeldingRobot},
@@ -92,7 +92,8 @@ export default function EditScreenInfo({path}: {path: string}) {
 
       newMachineData.machines[machineName][partName] = partValue;
 
-      await updateMachineData(newMachineData);
+      updateData(newMachineData);
+
       setIsSaved(true);
       setTimeout(() => {
         setIsSaved(false);
@@ -101,14 +102,7 @@ export default function EditScreenInfo({path}: {path: string}) {
       console.error(error);
       throw error; // Handle API errors appropriately
     }
-  }, [machineData, updateMachineData, machineName, partName, partValue]);
-
-  //Doing this because we're not using central state like redux
-  useFocusEffect(
-    useCallback(() => {
-      loadMachineData();
-    }, []),
-  );
+  }, [machineData, updateData, machineName, partName, partValue]);
 
   return (
     <View>
